@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Variables */
+
+/* Global styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+}
+
+body {
+  font-family: "inter", sans-serif;
+}
+
+@layer components {
+  .center {
+    @apply flex justify-center items-center;
+  }
+  /* Spinner Sizes */
+  .spinner1 {
+    @apply w-20 h-20 border-8 max-md:w-16 max-md:h-16 max-md:border-4;
+  }
+  .spinner2 {
+    @apply w-9 h-9 border-4 max-md:w-8 max-md:h-8 max-md:border-4;
+  }
+
+  /* Submit Button Colors */
+  .submit-button1 {
+    @apply bg-blue-700 hover:bg-blue-600 max-md:dark:bg-blue-600 max-md:dark:hover:bg-blue-500;
+  }
+  .submit-button2 {
+    @apply bg-green-700 hover:bg-green-600 brightness-110; /* ! don't change this for accessibility */
+  }
+  .submit-button3 {
+    @apply bg-cyan-700 hover:bg-cyan-600 max-md:dark:bg-cyan-600 max-md:dark:hover:bg-cyan-500;
+  }
+  .submit-button4 {
+    @apply bg-red-700 hover:bg-red-600 max-md:dark:bg-red-600 max-md:dark:hover:bg-red-500;
+  }
+  .submit-button5{
+    @apply bg-indigo-700 hover:bg-indigo-600 max-md:dark:bg-indigo-600 max-md:dark:hover:bg-indigo-500; 
+  }
+
+  /* Images */
+  .bg-sun {
+    background-image: url("./assets/images/sun.svg");
+  }
+  .bg-moon {
+    background-image: url("./assets/images/moon.svg");
+  }
+
+  /* hover transition */
+  .hover-transition1 {
+    @apply transition-colors duration-150;
+  }
+}

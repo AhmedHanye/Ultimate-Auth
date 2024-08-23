@@ -1,0 +1,15 @@
+{% include "email/email.html" %}
+
+
+{% block content %}
+  <div class="container">
+    <h1>Hello <span>{{ username }}</span>,</h1>
+    <h2>⚠️⚠️ Someone tried to register with your email address. ⚠️⚠️</h2>
+    <p>If it was you, you can <a href="{{ sign_in_url }}">sign in</a>.</p>
+    <p>
+      If you forgot your password, you can
+      <a href="{{ password_reset_url }}">reset it here</a>.
+    </p>
+    <p>If it wasn't you, please ignore this email.</p>
+  </div>
+{% endblock %}
