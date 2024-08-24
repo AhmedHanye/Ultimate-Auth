@@ -7,7 +7,6 @@ from .email import (
     registration_attempt_email,
     login_notification_email,
 )
-from geopy.geocoders import Nominatim
 from django.contrib.auth import authenticate
 from django.contrib.sites.shortcuts import get_current_site
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,6 +16,7 @@ from rest_framework_simplejwt.token_blacklist.models import (
 )
 import requests
 from django.conf import settings
+from django.contrib.gis.geoip2 import GeoIP2
 
 User = get_user_model()
 
@@ -48,27 +48,45 @@ def createUser(request, email, username, password):
     )
 
 
-# * Token Management
-# get client IP
-def get_client_ip(request):
-    x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
-    return (
-        x_forwarded_for.split(",")[0]
-        if x_forwarded_for
-        else request.META.get("REMOTE_ADDR")
-    )
-
-
-# get location from IP
-def get_location(ip):
+# * Track user location
+# Get location from IP
+def get_location(request):
     try:
-        geolocator = Nominatim(user_agent="your_app_name")
-        return geolocator.geocode(ip)
-    except Exception as e:
-        print(f"Geolocation error: {e}")
-        return None
+        # Get the ip address from the request
+        remote_addr = request.META.get("HTTP_X_FORWARDED_FOR")
+        address = (
+            remote_addr.split(",")[0]
+            if remote_addr
+            else request.META.get("REMOTE_ADDR")
+        )
+
+        # Get location from IP address
+        g = GeoIP2()
+        location = g.city(address)
+        return (
+            location.get("continent_name"),
+            location.get("country_name"),
+            location.get("city"),
+            location.get("time_zone"),
+        )
+    except Exception as e:  # If there is an error, return None
+        return None, None, None, None
 
 
+# Send location to user email
+def send_location(request, username, email):
+    continent, country, city, timezone = get_location(request)
+    context = {
+        "username": username,
+        "continent": continent or "Unknown continent",
+        "country": country or "Unknown country",
+        "city": city or "Unknown city",
+        "timezone": timezone or "Unknown timezone",
+    }
+    login_notification_email(email, context)
+
+
+# * Token management
 # Token generation
 def get_tokens(user):
     try:
@@ -81,19 +99,11 @@ def get_tokens(user):
         raise Exception(f"Token generation error: {e}")
 
 
-# Token Optain
+# Token Obtain
 def ObtainTokens(request, email, password):
     user = authenticate(request, username=email, password=password)
     if user:
-        ip_address = get_client_ip(request)
-        location = get_location(ip_address)
-
-        context = {
-            "username": user.username,
-            "location": location.address if location else "Unknown location",
-        }
-        login_notification_email(email, context)
-
+        send_location(request, user.username, email)
         tokens = get_tokens(user)
         return Response(tokens, status=status.HTTP_200_OK)
     else:
@@ -102,7 +112,7 @@ def ObtainTokens(request, email, password):
         )
 
 
-# * Remove refresh tokens
+# Remove refresh tokens
 def remove_refresh_tokens(request, all, refresh):
     if all:
         tokens = OutstandingToken.objects.filter(user=request.user)
@@ -146,7 +156,7 @@ def create_or_activate_user(username, email):
 
 
 # Google SSO
-def Google_SSO(token):
+def Google_SSO(token, request):
     try:
         # Get user info from Google
         response = requests.get(
@@ -162,6 +172,7 @@ def Google_SSO(token):
         user = create_or_activate_user(username, email)
         # Generate tokens
         tokens = get_tokens(user)
+        send_location(request, user.username, email)
         return Response(tokens, status=status.HTTP_200_OK)
 
     except Exception as e:
@@ -169,7 +180,7 @@ def Google_SSO(token):
 
 
 # GitHub SSO
-def GitHub_SSO(code):
+def GitHub_SSO(code, request):
     try:
         if not code:
             return Response({"error": "No code provided"}, status=400)
@@ -238,6 +249,7 @@ def GitHub_SSO(code):
         user = create_or_activate_user(username, email)
         # Generate tokens
         tokens = get_tokens(user)
+        send_location(request, user.username, email)
         return Response(tokens, status=status.HTTP_200_OK)
     except Exception as e:
         return Response(

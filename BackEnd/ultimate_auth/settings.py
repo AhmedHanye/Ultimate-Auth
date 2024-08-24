@@ -15,6 +15,8 @@ SITE_DOMAIN = os.getenv("SITE_DOMAIN")
 SITE_NAME = os.getenv("SITE_NAME")
 FRONT_END = os.getenv("FRONT_END")
 
+GEOIP_PATH =os.path.join('GeoIp2')
+
 ALLOWED_HOSTS = [
     SITE_DOMAIN,
 ]
@@ -32,6 +34,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "djoser",
     "corsheaders",
+    "geoip2",
     "custom_auth",
 ]
 
@@ -117,6 +120,8 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
+    "DEFAULT_PARSER_CLASSES": ("rest_framework.parsers.JSONParser",),
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_THROTTLE_CLASSES": (
         "rest_framework.throttling.AnonRateThrottle",

@@ -1,11 +1,15 @@
-{% include "email/email.html" %}
-
-
-{% block content %}
-  <div class="container">
-    <h1>Hello <span>{{ username }}</span>,</h1>
-    <h2>You are Signed in successfuly! 🎉🎉🎉</h2>
-    <p>The location in which you signed in from is <span class="highlighted">{{ location }}</span>.</p>
-    <p>⚠️ If it wasn't you,We Suggest going to the website and logout from all devices then click on forget password and change the password. ⚠️</p>
-  </div>
+{% include "email/email.html" %} {% block content %}
+<div class="container">
+  <h1>Hello <span>{{ username }}</span>,</h1>
+  <h2>You are Signed in successfuly! 🎉🎉🎉</h2>
+  <p>The location in which you signed in from is:</p>
+  <p>Continent: <span class="highlighted">{{ continent }}</span></p>
+  <p>Country: <span class="highlighted">{{ country }}</span></p>
+  <p>City: <span class="highlighted">{{ city }}</span></p>
+  <p>Time Zone: <span class="highlighted">{{ timezone }}</span></p>
+  <p>
+    ⚠️ If it wasn't you,We Suggest going to the website and logout from all
+    devices then click on forget password and change the password. ⚠️
+  </p>
+</div>
 {% endblock %}

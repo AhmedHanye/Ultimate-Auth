@@ -87,7 +87,7 @@ class GoogleLogin(APIView):
 
     def post(self, request):
         token = request.data.get("access_token")
-        return Google_SSO(token)
+        return Google_SSO(token,request)
 
 
 # GitHub Login
@@ -96,4 +96,4 @@ class GitHubLogin(APIView):
 
     def post(self, request):
         code = request.data.get("code")
-        return GitHub_SSO(code)
+        return GitHub_SSO(code,request)
