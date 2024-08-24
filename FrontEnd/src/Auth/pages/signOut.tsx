@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 
-import { getToken, removeAllTokens, signOutApi } from "../utils/auth";
+import { getToken, removeAllTokens, ApiAuth } from "../utils/auth";
 import Loading from "../../Common/pages/loading";
 import NavigateHooks from "../../Common/utils/navigateHooks";
 import NotifyHooks from "../../Common/utils/notifyHooks";
@@ -19,7 +19,10 @@ const SignOut = () => {
         all: all === "all",
         ...(all !== "all" && { refresh: getToken("refresh") }),
       };
-      signOutApi(data)
+      ApiAuth(
+        "signOut",
+        data
+      )
         .then(() => NotifySuccess("Signed Out Successfully"))
         .catch((error: string) => NotifyError(error))
         .finally(() => {

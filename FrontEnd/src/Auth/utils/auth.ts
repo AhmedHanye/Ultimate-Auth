@@ -1,15 +1,14 @@
 import axios from "axios";
 const backend_url = import.meta.env.VITE_BACKEND_URL as string;
 
-interface AuthData {
-  [key: string]: any;
-}
+type apiPaths = "signIn" | "refreshToken" | "signOut" | "signUp" | "resendActivationLink" | "activateEmail" | "googleSSO" | "githubSSO" | "userDetails" | "deleteAccount" | "askForPasswordReset" | "resetPassword";
 
 // * API Endpoints
-const apiEndPoints = {
+const apiEndPoints: {
+  [key: string]: string;
+} = {
   signIn: "/api/token/",
   refreshToken: "/api/token/refresh/",
-  verifyToken: "/api/token/verify/",
   signOut: "/api/token/logout/",
   signUp: "/auth/users/",
   resendActivationLink: "/auth/users/resend_activation/",
@@ -20,6 +19,37 @@ const apiEndPoints = {
   deleteAccount: "/auth/users/me/",
   askForPasswordReset: "/auth/users/reset_password/",
   resetPassword: "/auth/users/reset_password_confirm/",
+};
+
+
+// * Token Management
+export const getToken = (token: "access" | "refresh") => {
+  return (
+    (localStorage.getItem(token) as string) ||
+    (sessionStorage.getItem(token) as string) ||
+    ""
+  );
+};
+
+export const setToken = (
+  token: "access" | "refresh",
+  value: string,
+  method: 0 | 1
+): void => {
+  if (method) { // 1 for localStorage and 0 for sessionStorage
+    localStorage.setItem(token, value);
+    sessionStorage.removeItem(token);
+  } else {
+    sessionStorage.setItem(token, value);
+    localStorage.removeItem(token);
+  }
+};
+
+export const removeAllTokens = (): void => {
+  ["access", "refresh"].forEach((token) => {
+    localStorage.removeItem(token);
+    sessionStorage.removeItem(token);
+  });
 };
 
 // * API Handler and Error Handler
@@ -44,159 +74,62 @@ const handleError = (error: any): string => {
   return finallError;
 };
 
-const ApiAuthHandler = async (
-  api: string,
+export const ApiAuth =  (
+  api:apiPaths,
   data: any,
-  token?: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "POST",
-  params?: any,
-  hasRefreshedToken: boolean = false // Flag to prevent infinite loop
-): Promise<any> => {
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
-  const config = {
-    method,
-    url: `${backend_url}${api}`,
-    data,
-    params,
-    headers,
-  };
-
-  try {
-    const response = await axios(config);
-    return response.data;
-  } catch (error: any) {
-    // Check if the error is due to an invalid token and if we haven't already refreshed the token
-    if (
-      apiEndPoints.refreshToken !== api &&
-      error?.response?.status === 401 &&
-      error.response?.data?.detail ===
-        "Given token not valid for any token type" &&
-      !hasRefreshedToken
-    ) {
-      try {
-        const res = await refreshTokenApi();
-        const m = localStorage.getItem("access") ? 1 : 0;
-        setToken("access", res.access, m);
-        setToken("refresh", res.refresh, m);
-
-        // Retry the original request with the new token, setting hasRefreshedToken to true
-        return ApiAuthHandler(api, data, res.access, method, params, true);
-      } catch (refreshError) {
-        throw handleError(refreshError);
+): Promise<any> =>  {
+  return new Promise((resolve, reject) => {
+    /* 
+      1. check if the api requires a token
+      2. if it does, check if the token is present in the local storage
+      3. if it is, add the token to the headers
+      4. if not, reject the promise with a message
+    */
+    let headers = {};
+    if (["deleteAccount", "userDetails","signOut"].includes(api)) {
+      if (!getToken("access")){
+        reject("You need to Sign in first");
+        return;
       }
-    } else {
-      throw handleError(error);
+      else{
+        headers = { Authorization: `Bearer ${getToken("access")}` };
+      }
     }
-  }
-};
 
-// * Token Management
-export const getToken = (token: "access" | "refresh") => {
-  return (
-    (localStorage.getItem(token) as string) ||
-    (sessionStorage.getItem(token) as string) ||
-    ""
-  );
-};
-export const setToken = (
-  token: "access" | "refresh",
-  value: string,
-  method: 0 | 1
-): void => {
-  if (method) {
-    localStorage.setItem(token, value);
-    sessionStorage.removeItem(token);
-  } else {
-    sessionStorage.setItem(token, value);
-    localStorage.removeItem(token);
-  }
-};
-export const removeAllTokens = (): void => {
-  ["access", "refresh"].forEach((token) => {
-    localStorage.removeItem(token);
-    sessionStorage.removeItem(token);
-  });
-};
+    // Config for the axios request
+    const config = {
+      method,
+      url: `${backend_url}${apiEndPoints[api]}`,
+      data,
+      headers,
+    };
 
-// * Auth APIs Calls
-export const signInApi = (data: AuthData): Promise<any> => {
-  return ApiAuthHandler(apiEndPoints.signIn, data);
-};
+    // Make the request
+    axios(config)
+      .then((response) => {
+        resolve(response.data);
+      })
+      .catch((error) => {
+        // if the error is due to an invalid access token
+        if (headers && error?.response?.status === 401 &&
+           error.response?.data?.detail === "Given token not valid for any token type") {
+            axios({
+              method: "POST",
+              url: `${backend_url}${apiEndPoints.refreshToken}`,
+              data: { refresh: getToken("refresh") },
+            }).then((res:any) => {
+              const m = localStorage.getItem("refresh") ? 1 : 0;
+              setToken("access", res.access, m);
+              setToken("refresh", res.refresh, m);
 
-export const signUpApi = (data: AuthData): Promise<any> => {
-  return ApiAuthHandler(apiEndPoints.signUp, data);
-};
-
-export const signOutApi = (data: AuthData): Promise<any> => {
-  return ApiAuthHandler(apiEndPoints.signOut, data, getToken("access"));
-};
-
-export const refreshTokenApi = (): Promise<any> => {
-  if (getToken("refresh")) {
-    return ApiAuthHandler(apiEndPoints.refreshToken, {
-      refresh: getToken("refresh"),
-    });
-  }
-  return Promise.reject("You need to Sign in first");
-};
-
-export const verifyTokenApi = (): Promise<any> => {
-  if (!getToken("refresh")) {
-    return Promise.reject("No refresh token found");
-  } else {
-    return ApiAuthHandler(apiEndPoints.verifyToken, {
-      token: getToken("access"),
-    });
-  }
-};
-
-export const resendActivationLinkApi = (data: AuthData): Promise<any> => {
-  return ApiAuthHandler(apiEndPoints.resendActivationLink, data);
-};
-
-export const activateAccountApi = (
-  uid: string,
-  token: string
-): Promise<any> => {
-  return ApiAuthHandler(apiEndPoints.activateEmail, { uid, token });
-};
-
-export const GoogleSSOApi = (accessToken: string) => {
-  return ApiAuthHandler(apiEndPoints.googleSSO, { access_token: accessToken });
-};
-
-export const GithubSSOApi = (code: string) => {
-  return ApiAuthHandler(apiEndPoints.githubSSO, {
-    code: code,
-  });
-};
-
-export const UserDetailsApi = () => {
-  if (!getToken("access")) {
-    return Promise.reject("You need to Sign in first");
-  } else {
-    return ApiAuthHandler(
-      apiEndPoints.userDetails,
-      {},
-      getToken("access"),
-      "GET"
-    );
-  }
-};
-
-export const AskForPasswordResetApi = (data: AuthData) => {
-  return ApiAuthHandler(apiEndPoints.askForPasswordReset, data);
-};
-
-export const ResetPasswordApi = (data: AuthData) => {
-  return ApiAuthHandler(apiEndPoints.resetPassword, data);
-};
-
-export const DeleteAccountApi = (data: AuthData) => {
-  return ApiAuthHandler(
-    apiEndPoints.deleteAccount,
-    data,
-    getToken("access"),
-    "DELETE"
-  );
-};
+              // Retry the original request with the new token
+              return ApiAuth(api, data, method).then(resolve).catch(reject);
+            }).catch((refreshError) => {
+              reject(handleError(refreshError));
+            });
+        }
+        reject(handleError(error));
+      });
+  })
+}

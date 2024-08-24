@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { GithubSSOApi, setToken } from "../utils/auth";
+import { ApiAuth, setToken } from "../utils/auth";
 import Loading from "../../Common/pages/loading";
 
 import NotifyHooks from "../../Common/utils/notifyHooks";
@@ -11,9 +11,19 @@ const GithubAuth = () => {
   const { navigateTo } = NavigateHooks();
   const { NotifySuccess, NotifyError } = NotifyHooks();
 
+  // * Handle Github Authentication
   useEffect(() => {
-    // * if the code is not empty, send the code to the backend to get the Tokens
-    GithubSSOApi(code)
+    // if code is not present in the url, show an error message and go to the resend email page
+    if (!code) {
+      NotifyError("Invalid Github Authentication Link");
+      navigateTo("activation");
+    }
+    ApiAuth(
+      "githubSSO",
+      {
+        code: code,
+      }
+    )
       .then((response: { access: string; refresh: string }) => {
         setToken("access", response.access, 1);
         setToken("refresh", response.refresh, 1);

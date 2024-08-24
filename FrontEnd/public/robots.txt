@@ -5,12 +5,9 @@ Allow: /auth/sign-up/
 Allow: /auth/activation/
 Allow: /auth/reseting-password/
 
-
 Disallow: /auth/sign-out/
-Disallow: /auth/activate/*
-Disallow: /auth/github-auth/
-Disallow: /auth/reset-password/*
 Disallow: /auth/delete-account/
-Disallow: /auth/
+Disallow: /auth/github-auth/
+
 
 

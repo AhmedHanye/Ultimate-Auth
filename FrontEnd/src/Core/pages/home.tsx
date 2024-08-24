@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import NotifyHooks from "../../Common/utils/notifyHooks";
 import NavigateHooks from "../../Common/utils/navigateHooks";
 
-import { removeAllTokens, UserDetailsApi } from "../../Auth/utils/auth";
+import { removeAllTokens, ApiAuth } from "../../Auth/utils/auth";
 import { setLoadingContext } from "../../App";
 
 interface userData {
@@ -19,7 +19,11 @@ const Home = () => {
 
   useEffect(() => {
     setLoading(true);
-    UserDetailsApi()
+    ApiAuth(
+      "userDetails",
+      {},
+      "GET"
+    )
       .then((res) => {
         setUserData(res);
       })
@@ -28,11 +32,11 @@ const Home = () => {
           error =
             "Your session has expired or is invalid. Please log in again.";
         }
-        NotifyError(error);
-        if (error !== "Network Error") {
+        else if (error !== "Network Error") {
           removeAllTokens();
           navigateTo("sign-in");
         }
+        NotifyError(error);
       })
       .finally(() => {
         setLoading(false);

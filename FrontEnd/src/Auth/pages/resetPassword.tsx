@@ -6,7 +6,7 @@ import Register from "../components/register";
 import RegisterForm from "../components/registerForm";
 import InputForm from "../components/inputForm";
 import { validateInput } from "../utils/validators";
-import { ResetPasswordApi } from "../utils/auth";
+import { ApiAuth } from "../utils/auth";
 import NotifyHooks from "../../Common/utils/notifyHooks";
 import SubmitButton from "../components/submitButton";
 import OtherRegister from "../components/otherRegister";
@@ -100,11 +100,14 @@ const ResetPassword = () => {
     });
     // * if all the fields are filled, send the data to the backend
     if (errorFree) {
-      ResetPasswordApi({
-        new_password: resetPasswordData.password,
-        uid: uid,
-        token: token,
-      })
+      ApiAuth(
+        "resetPassword",
+        {
+          new_password: resetPasswordData.password,
+          uid: uid,
+          token: token,
+        }
+      )
         .then(() => {
           navigateTo("sign-in");
           NotifySuccess("Password reset successfully");

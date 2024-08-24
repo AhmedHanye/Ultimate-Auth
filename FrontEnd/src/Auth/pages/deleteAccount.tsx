@@ -4,7 +4,7 @@ import SubmitButton from "../components/submitButton";
 import InputForm from "../components/inputForm";
 import RegisterForm from "../components/registerForm";
 import { validateInput } from "../utils/validators";
-import { DeleteAccountApi, removeAllTokens } from "../utils/auth";
+import { ApiAuth, removeAllTokens } from "../utils/auth";
 import NavigateHooks from "../../Common/utils/navigateHooks";
 import NotifyHooks from "../../Common/utils/notifyHooks";
 import { setLoadingContext } from "../../App";
@@ -23,9 +23,10 @@ const DeleteAccount = () => {
     setLoading(true);
     // * if the password is not empty, delete the account else show an error message
     if (password.trim()) {
-      DeleteAccountApi({
+      ApiAuth("deleteAccount",{
         current_password: password.trim(),
-      })
+      },
+    "DELETE")
         // * if the account is deleted successfully, show a success message
         .then(() => {
           NotifySuccess("Account Deleted Successfully");

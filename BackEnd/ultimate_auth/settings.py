@@ -80,23 +80,31 @@ STATIC_URL = "/static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# * Database Settings
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("PGDATABASE"),
-        "USER": os.getenv("PGUSER"),
-        "PASSWORD": os.getenv("PGPASSWORD"),
-        "HOST": os.getenv("PGHOST"),
-        "PORT": os.getenv("PGPORT", 5432),
-        "OPTIONS": {
-            "sslmode": "require",
-        },
-        "DISABLE_SERVER_SIDE_CURSORS": True,
+# * Database Settings (PostgreSQL or SQLite)
+if os.getenv("PGDATABASE"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.getenv("PGDATABASE"),
+            "USER": os.getenv("PGUSER"),
+            "PASSWORD": os.getenv("PGPASSWORD"),
+            "HOST": os.getenv("PGHOST"),
+            "PORT": os.getenv("PGPORT", 5432),
+            "OPTIONS": {
+                "sslmode": "require",
+            },
+            "DISABLE_SERVER_SIDE_CURSORS": True,
+        }
     }
-}
-CONN_MAX_AGE = 30
-CONN_HEALTH_CHECKS = True  # * enable health checks for database connections
+    CONN_MAX_AGE = 30  # * close database connections after 30 seconds of inactivity
+    CONN_HEALTH_CHECKS = True  # * enable health checks for database connections
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 
 # * CORS Settings
 CORS_ALLOWED_ORIGINS = [

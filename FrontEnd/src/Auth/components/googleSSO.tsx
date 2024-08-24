@@ -1,6 +1,6 @@
 import { useGoogleLogin } from "@react-oauth/google";
 import GoogleImage from "../../assets/images/google.svg";
-import { GoogleSSOApi, setToken } from "../utils/auth";
+import { ApiAuth, setToken } from "../utils/auth";
 import ButtonSSO from "./buttonSSO";
 
 import NotifyHooks from "../../Common/utils/notifyHooks";
@@ -26,7 +26,10 @@ const GoogleSSO = React.memo(() => {
   });
   // * verify the access token and create the account then login and get the tokens
   const handleLogin = (user: { access_token: string }) => {
-    GoogleSSOApi(user.access_token)
+    ApiAuth(
+      "googleSSO",
+      { access_token: user.access_token },
+    )
       .then((response) => {
         setToken("access", response.access, 1);
         setToken("refresh", response.refresh, 1);

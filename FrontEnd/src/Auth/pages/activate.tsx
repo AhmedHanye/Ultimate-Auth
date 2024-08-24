@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import NavigateHooks from "../../Common/utils/navigateHooks";
 import NotifyHooks from "../../Common/utils/notifyHooks";
 
-import { activateAccountApi } from "../utils/auth";
+import { ApiAuth } from "../utils/auth";
 import Loading from "../../Common/pages/loading";
 
 const Activate = () => {
@@ -15,7 +15,13 @@ const Activate = () => {
       NotifyError("Invalid activation link.");
       navigateTo("activation");
     } else {
-      activateAccountApi(uid, token)
+      ApiAuth(
+        "activateEmail",
+        { 
+          uid: uid,
+          token: token,
+         },
+      )
         .then(() => {
           NotifySuccess("Account activated successfully.");
           navigateTo("sign-in");

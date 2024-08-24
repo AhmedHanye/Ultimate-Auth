@@ -12,18 +12,17 @@ import { setLoadingContext } from "../../App";
 
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
-interface sendData {
-  [key: string]: string;
-}
+import { ApiAuth } from "../utils/auth";
+
 
 const SendEmail = React.memo(
   ({
     text,
-    func,
+    api,
     header,
   }: {
     text: String;
-    func: (data: sendData) => Promise<sendData>;
+    api: any;
     header: string;
   }) => {
     const [email, setEmail] = useState<string>("");
@@ -34,16 +33,16 @@ const SendEmail = React.memo(
       const { NotifySuccess, NotifyError } = NotifyHooks();
       setLoading(true);
       const errMessage = validateInput("email", email);
-      // * if the email is valid and not empty, send the email else show an error message
+      // if the email is valid and not empty, send the email else show an error message
       if (email && !errMessage) {
-        func({
+        ApiAuth(api,{
           email: email,
         })
-          // * if the email message is sent successfully, show a success message
+          // if the email message is sent successfully, show a success message
           .then(() => {
             NotifySuccess("Email Sent Successfully");
           })
-          // * if the email message is not sent successfully, show an error message
+          //  if the email message is not sent successfully, show an error message
           .catch((error) => {
             NotifyError(error);
           })
@@ -65,6 +64,8 @@ const SendEmail = React.memo(
         { y: "0", opacity: 1, duration: 0.4, ease: "none"},
       );
     }, []);
+
+
     return (
       <AuthLayout
         page={

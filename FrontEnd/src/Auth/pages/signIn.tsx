@@ -10,7 +10,7 @@ import SubmitButton from "../components/submitButton";
 
 import NavigateHooks from "../../Common/utils/navigateHooks";
 import NotifyHooks from "../../Common/utils/notifyHooks";
-import { setToken, signInApi } from "../utils/auth";
+import { setToken,ApiAuth } from "../utils/auth";
 import { validateInput } from "../utils/validators";
 import { setLoadingContext } from "../../App";
 
@@ -83,10 +83,13 @@ const SignIn = () => {
     });
     // * if the input fields are valid, send the data to the backend
     if (errorFree) {
-      signInApi({
-        email: signInData.email.trim(),
-        password: signInData.password.trim(),
-      })
+      ApiAuth(
+        "signIn",
+        {
+          email: signInData.email,
+          password: signInData.password,
+        }
+      )
         .then((res: { access: string; refresh: string }) => {
           const m = rememberMe.current?.checked ? 1 : 0; // * 1 -> local, 0 -> session storage
           setToken("access", res.access || "", m);

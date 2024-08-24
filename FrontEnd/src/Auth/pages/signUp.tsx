@@ -5,7 +5,7 @@ import Register from "../components/register";
 import RegisterForm from "../components/registerForm";
 import OtherMethods from "../components/otherMethods";
 import OtherRegister from "../components/otherRegister";
-import { signUpApi } from "../utils/auth";
+import { ApiAuth } from "../utils/auth";
 import { validateInput } from "../utils/validators";
 import NavigateHooks from "../../Common/utils/navigateHooks";
 import NotifyHooks from "../../Common/utils/notifyHooks";
@@ -116,7 +116,10 @@ const SignUp = () => {
     });
     // * If there are no errors, sign up
     if (errorFree) {
-      signUpApi(signUpData)
+      ApiAuth(
+        "signUp",
+        signUpData
+      )
         .then(() => {
           NotifySuccess("Account Created Successfully");
           navigateTo("activation");
