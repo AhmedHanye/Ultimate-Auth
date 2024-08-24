@@ -74,30 +74,24 @@ const handleError = (error: any): string => {
   return finallError;
 };
 
-export const ApiAuth =  (
-  api:apiPaths,
+export const ApiAuth = (
+  api: apiPaths,
   data: any,
   method: "GET" | "POST" | "PUT" | "DELETE" = "POST",
-): Promise<any> =>  {
+): Promise<any> => {
   return new Promise((resolve, reject) => {
-    /* 
-      1. check if the api requires a token
-      2. if it does, check if the token is present in the local storage
-      3. if it is, add the token to the headers
-      4. if not, reject the promise with a message
-    */
-    let headers = {};
-    if (["deleteAccount", "userDetails","signOut"].includes(api)) {
-      if (!getToken("access")){
+    let headers: { Authorization?: string } = {};
+
+    // Check if the API requires an access token
+    if (["deleteAccount", "userDetails", "signOut"].includes(api)) {
+      const token = getToken("access");
+      if (!token) {
         reject("You need to Sign in first");
         return;
       }
-      else{
-        headers = { Authorization: `Bearer ${getToken("access")}` };
-      }
+      headers = { Authorization: `Bearer ${token}` };
     }
 
-    // Config for the axios request
     const config = {
       method,
       url: `${backend_url}${apiEndPoints[api]}`,
@@ -105,31 +99,41 @@ export const ApiAuth =  (
       headers,
     };
 
-    // Make the request
+    // Make the initial request
     axios(config)
       .then((response) => {
         resolve(response.data);
       })
       .catch((error) => {
-        // if the error is due to an invalid access token
-        if (headers && error?.response?.status === 401 &&
-           error.response?.data?.detail === "Given token not valid for any token type") {
-            axios({
-              method: "POST",
-              url: `${backend_url}${apiEndPoints.refreshToken}`,
-              data: { refresh: getToken("refresh") },
-            }).then((res:any) => {
+        // Handle token expiration (401 Unauthorized with specific message)
+        if (
+          headers.Authorization &&
+          error?.response?.status === 401 &&
+          error.response?.data?.detail ===
+            "Given token not valid for any token type"
+        ) {
+          // Try to refresh the token
+          axios({
+            method: "POST",
+            url: `${backend_url}${apiEndPoints.refreshToken}`,
+            data: { refresh: getToken("refresh") },
+          })
+            .then((res: any) => {
               const m = localStorage.getItem("refresh") ? 1 : 0;
-              setToken("access", res.access, m);
-              setToken("refresh", res.refresh, m);
+              setToken("access", res.data.access, m);
+              setToken("refresh", res.data.refresh, m);
 
               // Retry the original request with the new token
               return ApiAuth(api, data, method).then(resolve).catch(reject);
-            }).catch((refreshError) => {
+            })
+            .catch((refreshError) => {
+              // Reject the promise if refreshing the token fails
               reject(handleError(refreshError));
             });
+        } else {
+          // Reject the promise with the original error
+          reject(handleError(error));
         }
-        reject(handleError(error));
       });
-  })
-}
+  });
+};
