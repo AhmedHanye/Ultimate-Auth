@@ -15,7 +15,7 @@ SITE_DOMAIN = os.getenv("SITE_DOMAIN")
 SITE_NAME = os.getenv("SITE_NAME")
 FRONT_END = os.getenv("FRONT_END")
 
-GEOIP_PATH =os.path.join('GeoIp2')
+GEOIP_PATH = os.path.join("GeoIp2")
 
 ALLOWED_HOSTS = [
     SITE_DOMAIN,
