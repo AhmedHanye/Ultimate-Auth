@@ -18,6 +18,7 @@ RUN python3 -m venv /app/myenv
 # Install dependencies using the virtual environment
 COPY requirements.txt /app/
 RUN /app/myenv/bin/pip install --no-cache-dir -r requirements.txt
+RUN /app/myenv/bin/pip install gunicorn  # Install gunicorn in the virtual environment
 
 # Copy the Django project code into the container
 COPY . /app/
