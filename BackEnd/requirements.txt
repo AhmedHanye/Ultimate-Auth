@@ -34,3 +34,4 @@ social-auth-core==4.5.4
 sqlparse==0.5.2
 urllib3==2.2.3
 yarl==1.17.2
+psycopg[binary]

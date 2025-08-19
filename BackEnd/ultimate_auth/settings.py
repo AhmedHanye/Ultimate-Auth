@@ -29,16 +29,17 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "corsheaders",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "djoser",
-    "corsheaders",
     "geoip2",
     "custom_auth",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -46,7 +47,6 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
 ]
 
 ROOT_URLCONF = "ultimate_auth.urls"
@@ -84,36 +84,29 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # * Database Settings (PostgreSQL or SQLite)
-if os.getenv("PGDATABASE"):
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": os.getenv("PGDATABASE"),
-            "USER": os.getenv("PGUSER"),
-            "PASSWORD": os.getenv("PGPASSWORD"),
-            "HOST": os.getenv("PGHOST"),
-            "PORT": os.getenv("PGPORT", 5432),
-            "OPTIONS": {
-                "sslmode": "require",
-            },
-            "DISABLE_SERVER_SIDE_CURSORS": True,
-        }
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("PGDATABASE"),
+        "USER": os.getenv("PGUSER"),
+        "PASSWORD": os.getenv("PGPASSWORD"),
+        "HOST": os.getenv("PGHOST"),
+        "PORT": os.getenv("PGPORT", 5432),
+        "OPTIONS": {
+            "sslmode": "require",
+        },
+        "DISABLE_SERVER_SIDE_CURSORS": True,
+        "OPTIONS": {"sslmode": "disable"},
     }
-    CONN_MAX_AGE = 30  # * close database connections after 30 seconds of inactivity
-    CONN_HEALTH_CHECKS = True  # * enable health checks for database connections
-else:
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": BASE_DIR / "db.sqlite3",
-        }
-    }
+}
+CONN_MAX_AGE = 30  # * close database connections after 30 seconds of inactivity
+CONN_HEALTH_CHECKS = True  # * enable health checks for database connections
+
 
 # * CORS Settings
 CORS_ALLOWED_ORIGINS = [
     os.getenv("FRONT_END"),
 ]
-
 
 # * Rest Framework Settings
 REST_FRAMEWORK = {
