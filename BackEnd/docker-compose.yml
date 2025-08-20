@@ -2,10 +2,14 @@ services:
   db:
     image: postgres
     container_name: ultimate_auth_db
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: ultimate_auth
-      POSTGRES_USER: ahmed
-      POSTGRES_PASSWORD: ultimate_auth_password
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER:     ${POSTGRES_USER}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGHOST:     ${PGHOST}
+      PGPORT:     ${PGPORT}
     ports:
       - "5432:5432"
     volumes:
@@ -26,11 +30,6 @@ services:
         condition: service_healthy
     env_file:
       - .env
-    environment:
-      PGHOST: db
-      POSTGRES_DB: ultimate_auth
-      POSTGRES_USER: ahmed
-      POSTGRES_PASSWORD: ultimate_auth_password
 
     ports:
       - "8000:8000"
@@ -41,8 +40,6 @@ services:
         python3 manage.py migrate --noinput &&
         gunicorn --bind 0.0.0.0:8000 ultimate_auth.wsgi:application
       "
-
-
-
+      
 volumes:
   pgdata:
