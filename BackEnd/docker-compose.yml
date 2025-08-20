@@ -1,45 +1,31 @@
 services:
   db:
-    image: postgres
-    container_name: ultimate_auth_db
+    image: postgres:17-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     env_file:
       - .env
-    environment:
-      PGDATABASE: ${POSTGRES_DB}
-      PGUSER:     ${POSTGRES_USER}
-      PGPASSWORD: ${POSTGRES_PASSWORD}
-      PGHOST:     ${PGHOST}
-      PGPORT:     ${PGPORT}
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - default
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ultimate_auth_backend
+  django-web:
+    build: .
+    container_name: django-web
+    ports:
+      - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
     env_file:
       - .env
+    command: sh -c "python3 manage.py migrate --noinput && gunicorn ultimate_auth.wsgi:application --bind 0.0.0.0:8000 --workers ${GUNICORN_WORKERS:-3} --timeout ${GUNICORN_TIMEOUT:-90} --graceful-timeout ${GUNICORN_GRACEFUL_TIMEOUT:-90} --keep-alive ${GUNICORN_KEEP_ALIVE:-5}"
+    networks:
+      - default
 
-    ports:
-      - "8000:8000"
-    volumes:
-      - .:/app
-    command: >
-      sh -c "
-        python3 manage.py migrate --noinput &&
-        gunicorn --bind 0.0.0.0:8000 ultimate_auth.wsgi:application
-      "
-      
 volumes:
-  pgdata:
+  postgres_data:
