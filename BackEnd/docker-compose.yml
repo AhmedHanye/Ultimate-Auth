@@ -1,37 +1,37 @@
 services:
+  db:
+    image: postgres:17-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    restart: unless-stopped
+
   backend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: ultimate_auth_backend
-    depends_on:
-      db:
-        condition: service_healthy
-    env_file:
-      - .env
+    build: .
+    command: >
+      sh -c "python manage.py migrate &&
+             gunicorn ultimate_auth.wsgi:application --bind 0.0.0.0:8000"
     ports:
       - "8000:8000"
-    volumes:
-      - .:/app
-    command: >
-      sh -c "
-        python3 manage.py migrate --noinput &&
-        gunicorn --bind 0.0.0.0:8000 ultimate_auth.wsgi:application
-      "
-
-  db:
-    image: postgres
-    container_name: ultimate_auth_db
-    env_file:
-      - .env
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    # ⚠️ No "ports:" here! Keep DB internal-only.
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGHOST=db
+      - PGPORT=5432
+      - SECRET_KEY=${SECRET_KEY}
+      - DEBUG=${DEBUG}
+      - SITE_DOMAIN=${SITE_DOMAIN}
+      - SITE_NAME=${SITE_NAME}
+      - FRONT_END=${FRONT_END}
+      - EMAIL_HOST_USER=${EMAIL_HOST_USER}
+      - EMAIL_HOST_PASSWORD=${EMAIL_HOST_PASSWORD}
+    depends_on:
+      - db
+    restart: unless-stopped
 
 volumes:
-  pgdata:
+  postgres_data:
